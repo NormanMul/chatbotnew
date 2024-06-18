@@ -30,9 +30,25 @@ st.subheader("Conversation History")
 for role, message in st.session_state['chat_history']:
     st.text_area(f"{role} said:", value=message, height=75)
 
+# Shortcut buttons for common queries
+st.subheader("Quick Questions")
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    if st.button("Plan My Spending"):
+        st.session_state['input_text'] = "What's a good spending plan for this month?"
+with col2:
+    if st.button("Investment Advice"):
+        st.session_state['input_text'] = "Can you give me some investment advice?"
+with col3:
+    if st.button("Check My Balance"):
+        st.session_state['input_text'] = "What's my current account balance?"
+with col4:
+    if st.button("Plan Future Savings"):
+        st.session_state['input_text'] = "How should I plan my savings for the next year?"
+
 # Main user input form
 with st.form('my_form'):
-    text = st.text_area('How can I assist you with your finances today?', 'Type your question here...')
+    text = st.text_area('How can I assist you with your finances today?', value=st.session_state.get('input_text', 'Type your question here...'))
     submitted = st.form_submit_button('Submit')
     if submitted:
         if not openai_api_key.startswith('sk-'):
