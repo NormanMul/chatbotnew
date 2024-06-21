@@ -11,6 +11,10 @@ st.title('🦜🔗 DoaIbu Chatbot as Your Personal Financial Advisor')
 
 # Sidebar configurations for OpenAI parameters
 openai_api_key = st.sidebar.text_input('OpenAI API Key, email naufal@openmachine.co if you need it')
+
+# Store the API key in OpenAI library configuration
+openai.api_key = openai_api_key
+
 temperature = st.sidebar.slider('Temperature', min_value=0.0, max_value=1.0, value=0.7, step=0.1)
 max_tokens = st.sidebar.slider('Maximum Tokens', min_value=100, max_value=1000, value=256, step=50)
 top_p = st.sidebar.slider('Top P', min_value=0.0, max_value=1.0, value=1.0, step=0.1)
@@ -20,14 +24,13 @@ presence_penalty = st.sidebar.slider('Presence Penalty', min_value=0.0, max_valu
 # Function to generate responses using OpenAI API
 def generate_response(input_text):
     response = openai.Completion.create(
-        engine="text-davinci-002",  # or another engine you have access to
+        engine="text-davinci-002",  # Use an appropriate engine like text-davinci-002 or newer
         prompt=input_text,
         temperature=temperature,
         max_tokens=max_tokens,
         top_p=top_p,
         frequency_penalty=frequency_penalty,
-        presence_penalty=presence_penalty,
-        api_key=openai_api_key
+        presence_penalty=presence_penalty
     )
     answer = response.choices[0].text.strip()
     st.session_state['chat_history'].append(("You", input_text))
