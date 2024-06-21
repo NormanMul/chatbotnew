@@ -1,6 +1,9 @@
 import streamlit as st
 import openai
 
+# Ensure the OpenAI API key is set directly using the client configuration
+openai.api_key = st.secrets["openai_api_key"]
+
 # Initialize session state for chat history if not already set
 if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = []
@@ -9,40 +12,37 @@ if 'chat_history' not in st.session_state:
 st.set_page_config(page_title="🔗 DoaIbu Chatbot")
 st.title('🦜🔗 DoaIbu Chatbot as Your Personal Financial Advisor')
 
-# Sidebar configurations for OpenAI parameters
-openai_api_key = st.sidebar.text_input('OpenAI API Key, email naufal@openmachine.co if you need it')
+# Sidebar configurations
+temperature = st.sidebar.slider('Temperature', 0.0, 1.0, 0.7, 0.1)
+max_tokens = st.sidebar.slider('Maximum Tokens', 100, 1000, 256, 50)
+top_p = st.sidebar.slider('Top P', 0.0, 1.0, 1.0, 0.1)
+frequency_penalty = st.sidebar.slider('Frequency Penalty', 0.0, 2.0, 0.0, 0.1)
+presence_penalty = st.sidebar.slider('Presence Penalty', 0.0, 2.0, 0.0, 0.1)
 
-# Store the API key in OpenAI library configuration
-openai.api_key = openai_api_key
-
-temperature = st.sidebar.slider('Temperature', min_value=0.0, max_value=1.0, value=0.7, step=0.1)
-max_tokens = st.sidebar.slider('Maximum Tokens', min_value=100, max_value=1000, value=256, step=50)
-top_p = st.sidebar.slider('Top P', min_value=0.0, max_value=1.0, value=1.0, step=0.1)
-frequency_penalty = st.sidebar.slider('Frequency Penalty', min_value=0.0, max_value=2.0, value=0.0, step=0.1)
-presence_penalty = st.sidebar.slider('Presence Penalty', min_value=0.0, max_value=2.0, value=0.0, step=0.1)
-
-# Function to generate responses using OpenAI API
 def generate_response(input_text):
-    response = openai.Completion.create(
-        engine="text-davinci-002",  # Use an appropriate engine like text-davinci-002 or newer
-        prompt=input_text,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        top_p=top_p,
-        frequency_penalty=frequency_penalty,
-        presence_penalty=presence_penalty
-    )
-    answer = response.choices[0].text.strip()
-    st.session_state['chat_history'].append(("You", input_text))
-    st.session_state['chat_history'].append(("Bot", answer))
-    return answer
+    try:
+        response = openai.Completion.create(
+            engine="text-davinci-002",  # Confirm this engine name based on your API subscription
+            prompt=input_text,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty
+        )
+        answer = response['choices'][0]['text'].strip()
+        st.session_state['chat_history'].append(("You", input_text))
+        st.session_state['chat_history'].append(("Bot", answer))
+        return answer
+    except Exception as e:
+        return str(e)  # For debugging purposes
 
-# Display previous interactions
+# Conversation history display
 st.subheader("Conversation History")
 for role, message in st.session_state['chat_history']:
     st.text_area(f"{role} said:", value=message, height=75)
 
-# Shortcut buttons for common queries
+# Quick questions for user convenience
 st.subheader("Quick Questions")
 col1, col2, col3, col4 = st.columns(4)
 with col1:
@@ -63,8 +63,5 @@ with st.form('my_form'):
     text = st.text_area('How can I assist you with your finances today?', value=st.session_state.get('input_text', 'Type your question here...'))
     submitted = st.form_submit_button('Submit')
     if submitted:
-        if not openai_api_key.startswith('sk-'):
-            st.warning('Please enter a valid OpenAI API key!', icon='⚠️')
-        else:
-            response = generate_response(text)
-            st.text_area("Bot's response:", value=response, height=100)
+        response = generate_response(text)
+        st.text_area("Bot's response:", value=response, height=100)
