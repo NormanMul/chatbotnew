@@ -27,7 +27,7 @@ presence_penalty = st.sidebar.slider('Presence Penalty', 0.0, 2.0, 0.0, 0.1)
 def generate_response(input_text):
     try:
         response = openai.Completion.create(
-            engine="text-davinci-002",  # Use an appropriate engine name
+            engine="text-davinci-002",  # Adjust to your engine
             prompt=input_text,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -35,11 +35,25 @@ def generate_response(input_text):
             frequency_penalty=frequency_penalty,
             presence_penalty=presence_penalty
         )
-        answer = response['choices'][0]['text'].strip()
+        answer = response.choices[0].text.strip()
         st.session_state['chat_history'].append(("You", input_text))
         st.session_state['chat_history'].append(("Bot", answer))
         return answer
     except Exception as e:
         return str(e)  # For debugging purposes
 
-# Display and other interactive elements follow...
+# Display previous interactions
+st.subheader("Conversation History")
+for role, message in st.session_state['chat_history']:
+    st.text_area(f"{role} said:", value=message, height=100, key=f"{role}_{len(st.session_state['chat_history'])}")
+
+# Main user input form
+with st.form('my_form'):
+    text = st.text_area('How can I assist you with your finances today?', value='', placeholder='Type your question here...')
+    submitted = st.form_submit_button('Submit')
+    if submitted:
+        if not openai_api_key or not openai_api_key.startswith('sk-'):
+            st.error('Please enter a valid OpenAI API key!', icon='⚠️')
+        else:
+            response = generate_response(text)
+            st.text_area("Bot's response:", value=response, height=100, key="bot_response")
