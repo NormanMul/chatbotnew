@@ -26,16 +26,16 @@ presence_penalty = st.sidebar.slider('Presence Penalty', 0.0, 2.0, 0.0, 0.1)
 
 def generate_response(input_text):
     try:
-        response = openai.Completion.create(
-            engine="text-davinci-002",  # Adjust to your engine
-            prompt=input_text,
+        response = openai.ChatCompletion.create(
+            model="text-davinci-002",  # Change to "gpt-3.5-turbo" or appropriate model if necessary
+            messages=[{"role": "user", "content": input_text}],
             temperature=temperature,
             max_tokens=max_tokens,
             top_p=top_p,
             frequency_penalty=frequency_penalty,
             presence_penalty=presence_penalty
         )
-        answer = response.choices[0].text.strip()
+        answer = response['choices'][0]['message']['content']
         st.session_state['chat_history'].append(("You", input_text))
         st.session_state['chat_history'].append(("Bot", answer))
         return answer
