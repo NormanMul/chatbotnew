@@ -1,5 +1,5 @@
 import streamlit as st
-from langchain.llms import OpenAI  # Ensure the import is based on your setup
+import openai
 
 # Initialize session state for chat history if not already set
 if 'chat_history' not in st.session_state:
@@ -19,11 +19,20 @@ presence_penalty = st.sidebar.slider('Presence Penalty', min_value=0.0, max_valu
 
 # Function to generate responses using OpenAI API
 def generate_response(input_text):
-    llm = OpenAI(api_key=openai_api_key, temperature=temperature, max_tokens=max_tokens, top_p=top_p, frequency_penalty=frequency_penalty, presence_penalty=presence_penalty)
-    response = llm.complete(prompt=input_text)  # Adjusted to use 'complete', verify this method name
+    response = openai.Completion.create(
+        engine="text-davinci-002",  # or another engine you have access to
+        prompt=input_text,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        top_p=top_p,
+        frequency_penalty=frequency_penalty,
+        presence_penalty=presence_penalty,
+        api_key=openai_api_key
+    )
+    answer = response.choices[0].text.strip()
     st.session_state['chat_history'].append(("You", input_text))
-    st.session_state['chat_history'].append(("Bot", response))
-    return response
+    st.session_state['chat_history'].append(("Bot", answer))
+    return answer
 
 # Display previous interactions
 st.subheader("Conversation History")
