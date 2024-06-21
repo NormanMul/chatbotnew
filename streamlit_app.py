@@ -20,7 +20,7 @@ presence_penalty = st.sidebar.slider('Presence Penalty', min_value=0.0, max_valu
 # Function to generate responses using OpenAI API
 def generate_response(input_text):
     llm = OpenAI(api_key=openai_api_key, temperature=temperature, max_tokens=max_tokens, top_p=top_p, frequency_penalty=frequency_penalty, presence_penalty=presence_penalty)
-    response = llm.generate_response(input_text)  # Verify generate_response is the correct method
+    response = llm.complete(prompt=input_text)  # Adjusted to use 'complete', verify this method name
     st.session_state['chat_history'].append(("You", input_text))
     st.session_state['chat_history'].append(("Bot", response))
     return response
