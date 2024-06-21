@@ -19,6 +19,8 @@ openai_api_key = st.sidebar.text_input('OpenAI API Key, email naufal@openmachine
 temperature = st.sidebar.slider('Temperature', min_value=0.0, max_value=1.0, value=0.7, step=0.1)
 
 # Function to generate responses using OpenAI API
+
+
 def generate_response(input_text):
     chat = ChatOpenAI(temperature=temperature, openai_api_key=openai_api_key)
 
@@ -26,16 +28,17 @@ def generate_response(input_text):
         system_message = SystemMessage(
             content="You are a helpful financial advisor who helps people make good financial decisions. "
         )
+        messages = [system_message, HumanMessage(content=input_text)] 
     else:
-        system_message = None
+        messages = st.session_state['chat_history'] + [HumanMessage(content=input_text)]
 
-    messages = st.session_state['chat_history'] + [HumanMessage(content=input_text)]
-
-    result = chat(messages, system_message)
+    result = chat(messages)  # No need for system message if it's already in history
     response = result.content
     st.session_state['chat_history'].append(HumanMessage(content=input_text))
     st.session_state['chat_history'].append(AIMessage(content=response))
     return response
+
+
 
 # Display previous interactions
 st.subheader("Conversation History")
