@@ -11,7 +11,7 @@ if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = []
 
 # Page Configuration
-st.set_page_config(page_title="🔗 DoaIbu Chatbot")
+st.set_page_config(page_title="🔗 DoaIbu OpenMachine Chatbot")
 st.title('🦜🔗 DoaIbu Chatbot as Your Personal Financial Advisor')
 
 # Sidebar configurations for OpenAI parameters
