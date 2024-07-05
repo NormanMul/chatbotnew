@@ -12,7 +12,7 @@ if 'chat_history' not in st.session_state:
 
 # Page Configuration
 st.set_page_config(page_title="🔗 DoaIbu OpenMachine Chatbot")
-st.title('🦜🔗 DoaIbu Chatbot as Your Personal Financial Advisor')
+st.title('🦜🔗 DoaIbu OpenMachine Chatbot as Your Personal Financial Advisor')
 
 # Sidebar configurations for OpenAI parameters
 openai_api_key = st.sidebar.text_input('OpenAI API Key, email naufal@openmachine.co if you need it')
