@@ -1,4 +1,6 @@
 import streamlit as st
+import time
+from openai.error import RateLimitError
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import (
     AIMessage,
@@ -20,6 +22,7 @@ temperature = st.sidebar.slider('Temperature', min_value=0.0, max_value=1.0, val
 
 # Function to generate responses using OpenAI API
 def generate_response(input_text):
+    # Predefined responses for specific requests
     if input_text.lower() == "bagaimana saldo saya":
         response = "Haloo Kak Mira.. Saldo anda 2.2 juta rupiah saat ini"
     elif input_text.lower() == "tolong bayar iuran pln bulan ini":
@@ -43,15 +46,25 @@ Tujuan: Menumbuhkan modal dengan risiko yang lebih tinggi, disarankan untuk dipe
 Instrumen: Reksa dana saham atau saham individual di perusahaan dengan fundamental kuat.
 Tujuan: Menumbuhkan modal secara signifikan dengan toleransi risiko yang lebih tinggi, cocok untuk tujuan keuangan 5 tahun atau lebih."""
     else:
-        # Fallback to OpenAI Chat model if query is not recognized
-        chat = ChatOpenAI(temperature=temperature, openai_api_key=openai_api_key)
-        system_message = SystemMessage(
-            content="You are a helpful financial advisor who helps people make good financial decisions."
-        )
-        messages = [system_message, HumanMessage(content=input_text)]
-        result = chat(messages)
-        response = result.content
+        # Handle other queries with OpenAI API
+        retries = 3
+        for attempt in range(retries):
+            try:
+                chat = ChatOpenAI(temperature=temperature, openai_api_key=openai_api_key)
+                system_message = SystemMessage(content="You are a helpful financial advisor who helps people make good financial decisions.")
+                messages = [system_message, HumanMessage(content=input_text)]
+                result = chat(messages)
+                response = result.content
+                break
+            except RateLimitError:
+                if attempt < retries - 1:
+                    wait = 2 ** attempt
+                    time.sleep(wait)
+                else:
+                    response = "Sorry, I'm unable to process your request right now due to rate limits. Please try again later."
+                    break
 
+    # Store the conversation history
     st.session_state['chat_history'].append(HumanMessage(content=input_text))
     st.session_state['chat_history'].append(AIMessage(content=response))
     return response
@@ -75,7 +88,7 @@ with col2:
         st.session_state['input_text'] = "Can you give me some investment advice?"
 with col3:
     if st.button("Check My Balance"):
-        st.session_state['input_text'] = "What's my current account balance?"  # This will be a placeholder response
+        st.session_state['input_text'] = "What's my current account balance?"
 with col4:
     if st.button("Plan Future Savings"):
         st.session_state['input_text'] = "How should I plan my savings for the next year?"
@@ -85,10 +98,9 @@ with st.form('my_form'):
     text = st.text_area(
         'How can I assist you with your finances today?',
         value=st.session_state.get('input_text', 'Type your question here...'),
-        height=150  # Increased height for better user experience
+        height=150
     )
     submitted = st.form_submit_button('Submit')
-
     if submitted:
         if not openai_api_key.startswith('sk-'):
             st.warning('Please enter a valid OpenAI API key!', icon='⚠️')
