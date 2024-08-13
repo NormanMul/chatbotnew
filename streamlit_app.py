@@ -15,7 +15,7 @@ st.set_page_config(page_title="🔗 DoaIbu OpenMachine Chatbot")
 st.title('🦜🔗 DoaIbu OpenMachine Chatbot as Your Personal Financial Advisor')
 
 # Sidebar configurations for OpenAI parameters
-openai_api_key = st.sidebar.text_input('OpenAI API Key, email naufal@openmachine.co if you need it')
+openai_api_key = st.sidebar.text_input('OpenAI API Key, email mira@openmachine.co if you need it')
 temperature = st.sidebar.slider('Temperature', min_value=0.0, max_value=1.0, value=0.7, step=0.1)
 
 # Function to generate responses using OpenAI API
