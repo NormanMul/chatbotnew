@@ -1,4 +1,6 @@
 import streamlit as st
+import time
+from openai.error import RateLimitError
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import (
     AIMessage,
@@ -31,8 +33,20 @@ def generate_response(input_text):
     else:
         messages = st.session_state['chat_history'] + [HumanMessage(content=input_text)]
 
-    result = chat(messages)  # No need for system message if it's already in history
-    response = result.content
+    retries = 3
+    for attempt in range(retries):
+        try:
+            result = chat(messages)  # No need for system message if it's already in history
+            response = result.content
+            break
+        except RateLimitError:
+            if attempt < retries - 1:
+                st.warning(f'API sedang kelebihan beban. Mencoba lagi dalam {2 ** attempt} detik.', icon='⚠️')
+                time.sleep(2 ** attempt)  # Exponential backoff
+            else:
+                st.error('API sedang tidak dapat diakses. Silakan coba lagi nanti.', icon='❌')
+                return "Maaf, saya tidak dapat memproses permintaan Anda saat ini."
+
     st.session_state['chat_history'].append(HumanMessage(content=input_text))
     st.session_state['chat_history'].append(AIMessage(content=response))
     return response
