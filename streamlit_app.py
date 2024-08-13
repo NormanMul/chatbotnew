@@ -1,6 +1,4 @@
 import streamlit as st
-import time
-from openai.error import RateLimitError
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import (
     AIMessage,
@@ -22,71 +20,78 @@ temperature = st.sidebar.slider('Temperature', min_value=0.0, max_value=1.0, val
 
 # Function to generate responses using OpenAI API
 def generate_response(input_text):
-    chat = ChatOpenAI(temperature=temperature, openai_api_key=openai_api_key)
+    if input_text.lower() == "bagaimana saldo saya":
+        response = "Haloo Kak Mira.. Saldo anda 2.2 juta rupiah saat ini"
+    elif input_text.lower() == "tolong bayar iuran pln bulan ini":
+        response = "Transaksi saat ini terkonfirmasi oleh suara anda, nominal RP. 750.000 telah ter-debet oleh akun anda ke pembayaran listrik PLN, saldo Kakak saat ini 1.45 juta Rupiah"
+    elif "plan investasi" in input_text.lower():
+        response = """Untuk membuat rencana investasi dengan saldo sebesar 1,4 juta rupiah pada bulan ini, berikut adalah rencana yang bisa kamu pertimbangkan:
+        
+1. Dana Darurat (20%) - Rp 280,000
+Instrumen: Reksa dana pasar uang atau tabungan berjangka.
+Tujuan: Menyimpan dana ini sebagai cadangan jika terjadi keadaan darurat yang memerlukan uang tunai cepat.
 
-    if not st.session_state['chat_history']:
+2. Investasi Jangka Pendek (30%) - Rp 420,000
+Instrumen: Reksa dana pendapatan tetap atau tabungan emas.
+Tujuan: Mengamankan modal dengan potensi keuntungan sedikit lebih tinggi dari pasar uang, bisa digunakan dalam 1-2 tahun ke depan.
+
+3. Investasi Jangka Menengah (30%) - Rp 420,000
+Instrumen: Reksa dana campuran atau saham blue chip.
+Tujuan: Menumbuhkan modal dengan risiko yang lebih tinggi, disarankan untuk dipegang dalam 3-5 tahun ke depan.
+
+4. Investasi Jangka Panjang (20%) - Rp 280,000
+Instrumen: Reksa dana saham atau saham individual di perusahaan dengan fundamental kuat.
+Tujuan: Menumbuhkan modal secara signifikan dengan toleransi risiko yang lebih tinggi, cocok untuk tujuan keuangan 5 tahun atau lebih."""
+    else:
+        # Fallback to OpenAI Chat model if query is not recognized
+        chat = ChatOpenAI(temperature=temperature, openai_api_key=openai_api_key)
         system_message = SystemMessage(
-            content="Kamu adalah asisten keuangan pribadi yang sangat membantu. "
-                    "Selalu sapa pengguna dengan nama 'Kak Mira', dan bantu mereka mengambil keputusan keuangan yang bijak."
+            content="You are a helpful financial advisor who helps people make good financial decisions."
         )
         messages = [system_message, HumanMessage(content=input_text)]
-    else:
-        messages = st.session_state['chat_history'] + [HumanMessage(content=input_text)]
-
-    retries = 3
-    for attempt in range(retries):
-        try:
-            result = chat(messages)  # No need for system message if it's already in history
-            response = result.content
-            break
-        except RateLimitError:
-            if attempt < retries - 1:
-                st.warning(f'API sedang kelebihan beban. Mencoba lagi dalam {2 ** attempt} detik.', icon='⚠️')
-                time.sleep(2 ** attempt)  # Exponential backoff
-            else:
-                st.error('API sedang tidak dapat diakses. Silakan coba lagi nanti.', icon='❌')
-                return "Maaf, saya tidak dapat memproses permintaan Anda saat ini."
+        result = chat(messages)
+        response = result.content
 
     st.session_state['chat_history'].append(HumanMessage(content=input_text))
     st.session_state['chat_history'].append(AIMessage(content=response))
     return response
 
 # Display previous interactions
-st.subheader("Riwayat Percakapan")
+st.subheader("Conversation History")
 for message in st.session_state['chat_history']:
     if isinstance(message, HumanMessage):
-        st.text_area("Kamu mengatakan:", value=message.content, height=75, key=str(message))
+        st.text_area("You said:", value=message.content, height=75, key=str(message))
     elif isinstance(message, AIMessage):
-        st.text_area("Bot mengatakan:", value=message.content, height=75, key=str(message))
+        st.text_area("Bot said:", value=message.content, height=75, key=str(message))
 
 # Quick questions
-st.subheader("Pertanyaan Cepat")
+st.subheader("Quick Questions")
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    if st.button("Rencanakan Pengeluaran"):
-        st.session_state['input_text'] = "Bagaimana rencana pengeluaran yang baik bulan ini?"
+    if st.button("Plan My Spending"):
+        st.session_state['input_text'] = "What's a good spending plan for this month?"
 with col2:
-    if st.button("Saran Investasi"):
-        st.session_state['input_text'] = "Bisakah kamu memberi saya saran investasi?"
+    if st.button("Investment Advice"):
+        st.session_state['input_text'] = "Can you give me some investment advice?"
 with col3:
-    if st.button("Cek Saldo"):
-        st.session_state['input_text'] = "Bagaimana saldo saya saat ini?"
+    if st.button("Check My Balance"):
+        st.session_state['input_text'] = "What's my current account balance?"  # This will be a placeholder response
 with col4:
-    if st.button("Rencanakan Tabungan"):
-        st.session_state['input_text'] = "Bagaimana saya harus merencanakan tabungan untuk tahun depan?"
+    if st.button("Plan Future Savings"):
+        st.session_state['input_text'] = "How should I plan my savings for the next year?"
 
 # Main user input form
 with st.form('my_form'):
     text = st.text_area(
-        'Bagaimana saya bisa membantu keuangan kamu hari ini?',
-        value=st.session_state.get('input_text', 'Tulis pertanyaan kamu di sini...'),
+        'How can I assist you with your finances today?',
+        value=st.session_state.get('input_text', 'Type your question here...'),
         height=150  # Increased height for better user experience
     )
-    submitted = st.form_submit_button('Kirim')
+    submitted = st.form_submit_button('Submit')
 
     if submitted:
         if not openai_api_key.startswith('sk-'):
-            st.warning('Masukkan API Key OpenAI yang valid!', icon='⚠️')
+            st.warning('Please enter a valid OpenAI API key!', icon='⚠️')
         else:
             response = generate_response(text)
-            st.text_area("Respon Bot:", value=response, height=100)
+            st.text_area("Bot's response:", value=response, height=100)
